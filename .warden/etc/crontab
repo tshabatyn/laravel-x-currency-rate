@@ -1,0 +1,5 @@
+# Run Laravel cron jobs
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=www-data
+#* * * * * www-data /var/www/html/artisan schedule:run >> /var/www/html/storage/logs/cron.log 2>&1

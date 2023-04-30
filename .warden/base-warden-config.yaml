@@ -1,0 +1,254 @@
+name: lcr
+services:
+  db:
+    command:
+    - mysqld
+    - --max_allowed_packet=1024M
+    - --explicit_defaults_for_timestamp=on
+    - --character-set-server=utf8mb4
+    - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_HISTFILE: /sql_history/.sql_history
+      MYSQL_PASSWORD: laravel
+      MYSQL_ROOT_PASSWORD: laravel
+      MYSQL_USER: laravel
+    hostname: lcr-percona
+    image: percona/percona-server:8.0
+    networks:
+      default: null
+    volumes:
+    - type: bind
+      source: ./laravel-x-currency-rate/.warden/env/db/zzz.cnf
+      target: /etc/mysql/conf.d/zzz.cnf
+      read_only: true
+      bind:
+        create_host_path: true
+    - type: bind
+      source: ./laravel-x-currency-rate/.warden/env/db/.my.cnf
+      target: /root/.my.cnf
+      read_only: true
+      bind:
+        create_host_path: true
+    - type: volume
+      source: sqlhistory
+      target: /sql_history
+      bind:
+        selinux: Z
+      volume: {}
+    - type: volume
+      source: db-data
+      target: /var/lib/mysql
+      bind:
+        selinux: Z
+      volume: {}
+  nginx:
+    depends_on:
+      php-fpm:
+        condition: service_started
+    environment:
+      NGINX_PUBLIC: /public
+      XDEBUG_CONNECT_BACK_HOST: host.docker.internal
+    hostname: lcr-nginx
+    image: ghcr.io/swiftotter/den-nginx:1.16
+    labels:
+      traefik.docker.network: lcr_default
+      traefik.enable: "true"
+      traefik.http.routers.lcr-nginx.priority: "2"
+      traefik.http.routers.lcr-nginx.rule: ' HostRegexp(`{subdomain:.+}.lcr.test`)
+        || Host(`lcr.test`)'
+      traefik.http.routers.lcr-nginx.tls: "true"
+      traefik.http.services.lcr-nginx.loadbalancer.server.port: "80"
+    networks:
+      default: null
+    volumes:
+    - type: bind
+      source: ./laravel-x-currency-rate
+      target: /var/www/html
+      bind:
+        create_host_path: true
+  php-debug:
+    depends_on:
+      php-fpm:
+        condition: service_started
+    environment:
+      CHOWN_DIR_LIST: '/bash_history /home/www-data/.ssh '
+      COMPOSER_MEMORY_LIMIT: "-1"
+      COMPOSER_VERSION: "2"
+      HISTFILE: /bash_history/.bash_history
+      NODE_VERSION: "18"
+      PHP_IDE_CONFIG: serverName=lcr-docker
+      SSH_AUTH_SOCK: /tmp/ssh-auth.sock
+      TRAEFIK_DOMAIN: lcr.test
+      TRAEFIK_SUBDOMAIN: app
+    expose:
+    - "9003"
+    extra_hosts:
+    - app.lcr.test:0.0.0.0
+    - lcr.test:0.0.0.0
+    hostname: lcr-php-debug
+    image: ghcr.io/swiftotter/den-php-fpm-debug:8.2-node18
+    networks:
+      default: null
+    volumes:
+    - type: volume
+      source: bashhistory
+      target: /bash_history
+      volume: {}
+    - type: bind
+      source: /Users/tshabatyn/.warden/ssl/rootca/certs
+      target: /etc/ssl/warden-rootca-cert
+      read_only: true
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/tshabatyn/.composer
+      target: /home/www-data/.composer
+      bind:
+        create_host_path: true
+    - type: volume
+      source: sshdirectory
+      target: /home/www-data/.ssh
+      volume: {}
+    - type: bind
+      source: /run/host-services/ssh-auth.sock
+      target: /run/host-services/ssh-auth.sock
+      bind:
+        create_host_path: true
+    - type: bind
+      source: ./laravel-x-currency-rate
+      target: /var/www/html
+      bind:
+        create_host_path: true
+  php-fpm:
+    depends_on:
+      db:
+        condition: service_started
+    environment:
+      CHOWN_DIR_LIST: '/bash_history /home/www-data/.ssh '
+      COMPOSER_MEMORY_LIMIT: "-1"
+      COMPOSER_VERSION: "2"
+      HISTFILE: /bash_history/.bash_history
+      NODE_VERSION: "18"
+      SSH_AUTH_SOCK: /tmp/ssh-auth.sock
+      TRAEFIK_DOMAIN: lcr.test
+      TRAEFIK_SUBDOMAIN: app
+    extra_hosts:
+    - app.lcr.test:0.0.0.0
+    - lcr.test:0.0.0.0
+    hostname: lcr-php-fpm
+    image: ghcr.io/swiftotter/den-php-fpm:8.2-node18
+    networks:
+      default: null
+    volumes:
+    - type: volume
+      source: bashhistory
+      target: /bash_history
+      volume: {}
+    - type: bind
+      source: /Users/tshabatyn/.warden/ssl/rootca/certs
+      target: /etc/ssl/warden-rootca-cert
+      read_only: true
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/tshabatyn/.composer
+      target: /home/www-data/.composer
+      bind:
+        create_host_path: true
+    - type: volume
+      source: sshdirectory
+      target: /home/www-data/.ssh
+      volume: {}
+    - type: bind
+      source: /run/host-services/ssh-auth.sock
+      target: /run/host-services/ssh-auth.sock
+      bind:
+        create_host_path: true
+    - type: bind
+      source: ./laravel-x-currency-rate/.warden/etc/crontab
+      target: /var/spool/cron/crontabs/www-data
+      bind:
+        create_host_path: true
+    - type: bind
+      source: ./laravel-x-currency-rate
+      target: /var/www/html
+      bind:
+        create_host_path: true
+  redis:
+    hostname: lcr-redis
+    image: redis:alpine
+    networks:
+      default: null
+    volumes:
+    - type: volume
+      source: redis
+      target: /data
+      volume: {}
+  webui:
+    depends_on:
+      php-fpm:
+        condition: service_started
+    entrypoint:
+    - sh
+    - -c
+    - /usr/bin/docker-entrypoint.sh
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      NODE_VERSION: "18"
+      SSH_AUTH_SOCK: /tmp/ssh-auth.sock
+      TRAEFIK_DOMAIN: lcr.test
+      TRAEFIK_SUBDOMAIN: webui
+      VITE_BACKEND_API_DOMAIN: app.lcr.test
+      VITE_WEBUI_DOMAIN: webui.lcr.test
+    expose:
+    - "9000"
+    extra_hosts:
+    - app.lcr.test:0.0.0.0
+    - lcr.test:0.0.0.0
+    - webui.lcr.test:0.0.0.0
+    hostname: lcr-webui
+    image: ghcr.io/swiftotter/den-php-fpm:8.2-node18
+    labels:
+      traefik.docker.network: lcr_default
+      traefik.enable: "true"
+      traefik.http.routers.lcr-webui.priority: "5"
+      traefik.http.routers.lcr-webui.rule: Host(`webui.lcr.test`)
+      traefik.http.routers.lcr-webui.tls: "true"
+      traefik.http.services.lcr-webui.loadbalancer.server.port: "9000"
+    networks:
+      default: null
+    volumes:
+    - type: bind
+      source: ./laravel-x-currency-rate/webui
+      target: /var/www/html
+      bind:
+        create_host_path: true
+    - type: bind
+      source: ./laravel-x-currency-rate/.warden/nodejs/docker-entrypoint.sh
+      target: /usr/bin/docker-entrypoint.sh
+      bind:
+        create_host_path: true
+networks:
+  default:
+    name: lcr_default
+    labels:
+      dev.warden.environment.name: lcr
+      dev.warden.environment.type: laravel
+volumes:
+  bashhistory:
+    name: lcr_bashhistory
+  db-data:
+    name: lcr_db-data
+  redis:
+    name: lcr_redis
+  sqlhistory:
+    name: lcr_sqlhistory
+  sshdirectory:
+    name: lcr_sshdirectory
+x-extra_hosts:
+- webui.lcr.test:0.0.0.0
+- app.lcr.test:0.0.0.0
+- lcr.test:0.0.0.0
+x-volumes:
+- /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock

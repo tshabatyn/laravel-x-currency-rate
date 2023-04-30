@@ -1,0 +1,125 @@
+[mysqld]
+## Final tuning for the MySQL caches and number of connections
+
+###### 10 front-nodes, on each we have max 30 php-fpm	= 300 connections
+###### 1 admin node, 30 php-fpm							= 30 connections
+###### 1 cron node, 30 php-fpm							= 30 connections
+######
+###### There might be total connections					= 360 (+ 40 reserved connections) 400
+######
+max_connections							= 40		# Making reserve pool of connections for Black Friday
+max_connect_errors						= 20
+performance_schema						= 1
+
+# there are total 447 tables in the eva DB, we will not work with all of theme at the same time
+# In future there might appear new table, so lets assume there will be 500 tables in total
+# Thus 85% from 500 will be equal to 425, this should be pretty mach enough.
+table_open_cache						= 384000
+table_open_cache_instances				= 4
+open_files_limit						= 40000
+
+## Logging slow queries
+### Non of us, do not read logs. Maybe in the future we will add Prometheus monitoring, then we will add logging back
+slow_query_log_file						= /var/log/mysql/db-slow.log
+long_query_time							= 5
+slow_query_log							= 0
+general_log_file						= /var/log/mysql/db-general.log
+general_log								= 0
+
+## Cache
+table_definition_cache					= 750
+query_cache_size						= 0
+query_cache_type						= OFF
+innodb_page_size						= 16K		# default, min value 16K
+
+## Per-thread Buffers
+sort_buffer_size						= 64M		# * max_connections 16M * 800, default 16M
+join_buffer_size						= 64M		# * max_connections 32M * 800, default 256K
+read_buffer_size						= 1524K		# * max_connections 256K * 800, default 128K
+bulk_insert_buffer_size					= 8M		# * max_connections 8M * 800, default 8M
+binlog_cache_size						= 32K		# * max_connections 64K * 800, default 32K
+thread_cache_size						= 600		# * max_connections 512 * 800, default 256
+read_rnd_buffer_size					= 2548K
+### Total 41GB
+
+## Temp Tables
+max_heap_table_size						= 386M
+tmp_table_size							= 254M
+
+# InnoDB.
+default_storage_engine					= InnoDB
+transaction-isolation					= READ-COMMITTED
+
+## Networking
+interactive_timeout						= 28800
+connect_timeout							= 5
+max_connect_errors						= 1000000
+max_allowed_packet						= 384M
+# The following values, in seconds, 8 * 60 * 60 = 28800
+wait_timeout							= 4800
+net_write_timeout						= 28800
+net_read_timeout						= 28800
+innodb_lock_wait_timeout				= 60
+
+## MyISAM
+key_buffer_size							= 512M
+#myisam_recover							= FORCE,BACKUP
+myisam_sort_buffer_size					= 24M
+
+## InnoDB
+# Decrease pressure to persistent storage I/O
+innodb_io_capacity						= 4000		# was 60 max 2000
+innodb_io_capacity_max					= 8000		# was 60 max 4000
+innodb_doublewrite						= 0
+innodb_open_files						= 700
+innodb_max_dirty_pages_pct				= 75
+innodb_max_dirty_pages_pct_lwm			= 60
+innodb_read_io_threads					= 2		# NUM_OF_CPU
+innodb_write_io_threads					= 2		# NUM_OF_CPU
+
+innodb_buffer_pool_size					= 1G		# was 512MB max 9G, then 1G
+innodb_buffer_pool_instances			= 1			# the result of (innodb_buffer_pool_size / innodb_buffer_pool_instances) should be > 1G, (min:1, max:64)
+innodb_log_file_size					= 128M		# was 256M max 2G, was 768 (Ratio innodb_log_file_size / innodb_buffer_pool_size (18.75 %): 1.5G * 2/10.0G should be equal to 25%)
+
+innodb_log_files_in_group				= 2			# number of log files in group, 2 is default value
+innodb_log_buffer_size					= 1M		# was 8M max 16M
+innodb_thread_concurrency				= 2		# NUM_OF_CPU
+innodb_flush_log_at_trx_commit			= 2
+innodb_file_per_table					= 1
+innodb_flush_method						= O_DIRECT
+innodb_checksums						= 0
+
+sql_mode								= NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,ERROR_FOR_DIVISION_BY_ZERO,NO_ZERO_IN_DATE,NO_ZERO_DATE
+
+innodb_lru_scan_depth					= 1024
+
+thread_stack							= 256K
+expire_logs_days						= 1
+max_binlog_size							= 2G
+innodb_stats_on_metadata				= 0
+innodb_change_buffering					= none
+innodb_adaptive_hash_index				= OFF
+innodb_flush_neighbors					= 0
+loose-innodb-page-cleaners				= 2		# NUM_OF_CPU
+loose-innodb-log_checksum-algorithm		= crc32
+loose-innodb-checksum-algorithm			= strict_crc32
+#loose-performance_schema				= ON
+skip_name_resolve						= ON
+innodb_checksum_algorithm				= NONE
+skip-log-bin							= ON		# Comment/Remove this line to make replication possible
+
+log_bin_trust_function_creators			= 1
+
+### Collation & Character-set
+collation-server						= utf8mb4_unicode_ci
+init-connect							= 'SET NAMES utf8mb4'
+character-set-server					= utf8mb4
+
+[client]
+default-character-set					= utf8mb4
+
+[mysql]
+default-character-set					= utf8mb4
+
+[mysqldump]
+max_allowed_packet						= 384M

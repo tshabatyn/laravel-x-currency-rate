@@ -1,0 +1,77 @@
+# LCR
+version: "3.9"
+
+x-extra_hosts: &x-extra_hosts
+  - webui.lcr.test:${TRAEFIK_ADDRESS:-0.0.0.0}
+  - app.lcr.test:${TRAEFIK_ADDRESS:-0.0.0.0}
+  - lcr.test:${TRAEFIK_ADDRESS:-0.0.0.0}
+
+services:
+  db:
+    hostname: ${WARDEN_ENV_NAME}-percona
+    image: percona/percona-server:8.0
+    environment:
+      MYSQL_HISTFILE: /sql_history/.sql_history
+    volumes:
+      - sqlhistory:/sql_history:Z
+      - .warden/env/db/zzz.cnf:/etc/mysql/conf.d/zzz.cnf:ro
+      - .warden/env/db/.my.cnf:/root/.my.cnf:ro
+      - db-data:/var/lib/mysql:Z
+    command:
+      - "mysqld"
+      - "--max_allowed_packet=1024M"
+      - "--explicit_defaults_for_timestamp=on"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+
+  nginx:
+    image: ghcr.io/swiftotter/den-nginx:1.16
+    labels:
+      traefik.docker.network: lcr_default
+
+  php-debug:
+    expose:
+      - 9003
+    image: ghcr.io/swiftotter/den-php-fpm-debug:${PHP_VERSION}-node${NODE_VERSION}
+
+  php-fpm:
+    image: ghcr.io/swiftotter/den-php-fpm:${PHP_VERSION}-node${NODE_VERSION}
+    volumes:
+      - .warden/etc/crontab:/var/spool/cron/crontabs/www-data
+
+  webui:
+    depends_on:
+      php-fpm:
+        condition: service_started
+    environment:
+      NODE_VERSION: "18"
+      SSH_AUTH_SOCK: /tmp/ssh-auth.sock
+      TRAEFIK_DOMAIN: lcr.test
+      TRAEFIK_SUBDOMAIN: webui
+      VITE_BACKEND_API_DOMAIN: "app.lcr.test"
+      VITE_WEBUI_DOMAIN: "webui.lcr.test"
+      CHOKIDAR_USEPOLLING: true
+    extra_hosts: *x-extra_hosts
+    hostname: ${WARDEN_ENV_NAME}-webui
+    image: ghcr.io/swiftotter/den-php-fpm:${PHP_VERSION}-node${NODE_VERSION}
+    volumes:
+      - ./webui:/var/www/html:rwZ
+      - .warden/nodejs/docker-entrypoint.sh:/usr/bin/docker-entrypoint.sh:roZ
+    entrypoint: ['sh', '-c', '/usr/bin/docker-entrypoint.sh']
+    expose:
+      - 9000
+    labels:
+      traefik.docker.network: lcr_default
+      traefik.enable: "true"
+      traefik.http.routers.lcr-webui.priority: "5"
+      traefik.http.routers.lcr-webui.rule: 'Host(`webui.lcr.test`)'
+      traefik.http.routers.lcr-webui.tls: "true"
+      traefik.http.services.lcr-webui.loadbalancer.server.port: "9000"
+
+  redis:
+    image: redis:alpine
+
+volumes:
+  db-data: {}
+  sqlhistory:
+    name: ${WARDEN_ENV_NAME}_sqlhistory
