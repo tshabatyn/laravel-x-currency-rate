@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-if [ "$(npm -v)" != "9.6.4" ]; then
-    sudo npm install -g npm@9.6.4
+if [ "$(command -v yarn)" != "" ]; then
+    sudo npm install -g yarn
 fi
 
 if [ ! -d /var/www/html/node_modules ]; then
-    npm install --dev
+    yarn install
 fi
 
-npm run dev
+yarn dev

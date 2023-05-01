@@ -67,6 +67,10 @@ services:
       traefik.http.routers.lcr-webui.rule: 'Host(`webui.lcr.test`)'
       traefik.http.routers.lcr-webui.tls: "true"
       traefik.http.services.lcr-webui.loadbalancer.server.port: "9000"
+#      traefik.http.routers.lcr-webui-socket.priority: "5"
+#      traefik.http.routers.lcr-webui-socket.rule: 'Host(`webui.lcr.test`)'
+#      traefik.http.routers.lcr-webui-socket.tls: "true"
+#      traefik.http.services.lcr-webui-socket.loadbalancer.server.port: "9001"
 
   redis:
     image: redis:alpine
