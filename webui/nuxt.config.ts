@@ -1,12 +1,19 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  css: ['~/assets/css/main.css'],
+  modules: [
+    '@nuxtjs/tailwindcss',
+    '@nuxtjs/color-mode',
+    // 'nuxt-icon',
+  ],
 
-  postcss: {
-    plugins: {
-      tailwindcss: {},
-      autoprefixer: {},
-    },
+  tailwindcss: {
+    injectPosition: 0,
+    viewer: true,
+  },
+
+  colorMode: {
+    classSufix: '',
+    classPrefix: '',
   },
 
   devServer: {

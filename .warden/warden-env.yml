@@ -60,6 +60,7 @@ services:
     entrypoint: ['sh', '-c', '/usr/bin/docker-entrypoint.sh']
     expose:
       - 9000
+#      - 24678
     labels:
       traefik.docker.network: lcr_default
       traefik.enable: "true"
@@ -67,10 +68,13 @@ services:
       traefik.http.routers.lcr-webui.rule: 'Host(`webui.lcr.test`)'
       traefik.http.routers.lcr-webui.tls: "true"
       traefik.http.services.lcr-webui.loadbalancer.server.port: "9000"
-#      traefik.http.routers.lcr-webui-socket.priority: "5"
-#      traefik.http.routers.lcr-webui-socket.rule: 'Host(`webui.lcr.test`)'
-#      traefik.http.routers.lcr-webui-socket.tls: "true"
-#      traefik.http.services.lcr-webui-socket.loadbalancer.server.port: "9001"
+#      traefik.http.routers.phabricator.entrypoints: wss
+#      traefik.http.services.wss.loadbalancer.server.port: "24678"
+#      traefik.webservice.frontend.entryPoints: http,https,ws,wss
+##      traefik.http.routers.lcr-webui-socket.priority: "5"
+##      traefik.http.routers.lcr-webui-socket.rule: 'Host(`webui.lcr.test`)'
+##      traefik.http.routers.lcr-webui-socket.tls: "true"
+##      traefik.http.services.lcr-webui-socket.loadbalancer.server.port: "9001"
 
   redis:
     image: redis:alpine
