@@ -1,6 +1,6 @@
 <template>
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-     viewBox="0 0 381.329 381.329" xml:space="preserve">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+       viewBox="0 0 381.329 381.329" xml:space="preserve">
 <g>
       <path d="M78.864,79.423l-24.369-5.431c-2.899-0.646-5.259,0.003-6.382,1.727c-0.967,1.484-0.931,3.59,0.103,5.929l2.945,6.662
         c0.667,1.355-0.291,3.057-0.784,3.506c-28.44,25.881-44.752,62.701-44.752,101.019c0,45.394,22.483,87.683,60.144,113.125
@@ -50,5 +50,3 @@
 </g>
 </svg>
 </template>
-<script setup lang="ts">
-</script>

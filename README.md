@@ -25,8 +25,8 @@
 1. Configure PHPStorm to Connect to DB
 
 ## Available services
-* [https://app.lrc.test/](https://app.lrc.test/) (CLI:`make open-backend`)
-* [https://webui.lrc.test/admin/](https://webui.lrc.test/) (CLI: `make open-webui`)
+* [https://api.lcr.test/](https://api.lcr.test/) (CLI:`make open-backend`)
+* [https://webui.lcr.test/admin/](https://webui.lcr.test/) (CLI: `make open-webui`)
 * [Traefik](https://traefik.warden.test/)
 * [Mailhog (All emails collector)](https://mailhog.warden.test/)
 * [dnsmasq](https://dnsmasq.warden.test/)
@@ -107,8 +107,8 @@ make down
 make uninstall
 ```
 
-### Magento 2 cron jobs
-For enabling the Magento 2 cron jobs, please, execute the following command.
+### Laravel cron jobs
+For enabling the Laravel cron jobs, please, execute the following command.
 ```shell
 make cron-enable
 ```

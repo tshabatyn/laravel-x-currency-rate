@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ['class', '[class="dark-mode"]'],
+  darkMode: 'class',
   content: [
     "./components/**/*.{js,vue,ts}",
     "./layouts/**/*.vue",
@@ -16,6 +16,7 @@ module.exports = {
         'gold': '#FFD700',
         'gold-dark': '#383018',
         'gold-light': '#968141',
+        'moonlight': '#c0c0c0',
       }
     },
   },

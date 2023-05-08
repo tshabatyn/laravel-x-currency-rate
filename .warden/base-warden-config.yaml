@@ -84,7 +84,7 @@ services:
     expose:
     - "9003"
     extra_hosts:
-    - app.lcr.test:0.0.0.0
+    - api.lcr.test:0.0.0.0
     - lcr.test:0.0.0.0
     hostname: lcr-php-debug
     image: ghcr.io/swiftotter/den-php-fpm-debug:8.2-node18
@@ -134,7 +134,7 @@ services:
       TRAEFIK_DOMAIN: lcr.test
       TRAEFIK_SUBDOMAIN: app
     extra_hosts:
-    - app.lcr.test:0.0.0.0
+    - api.lcr.test:0.0.0.0
     - lcr.test:0.0.0.0
     hostname: lcr-php-fpm
     image: ghcr.io/swiftotter/den-php-fpm:8.2-node18
@@ -199,12 +199,12 @@ services:
       SSH_AUTH_SOCK: /tmp/ssh-auth.sock
       TRAEFIK_DOMAIN: lcr.test
       TRAEFIK_SUBDOMAIN: webui
-      VITE_BACKEND_API_DOMAIN: app.lcr.test
+      VITE_BACKEND_API_DOMAIN: api.lcr.test
       VITE_WEBUI_DOMAIN: webui.lcr.test
     expose:
     - "9000"
     extra_hosts:
-    - app.lcr.test:0.0.0.0
+    - api.lcr.test:0.0.0.0
     - lcr.test:0.0.0.0
     - webui.lcr.test:0.0.0.0
     hostname: lcr-webui
@@ -248,7 +248,7 @@ volumes:
     name: lcr_sshdirectory
 x-extra_hosts:
 - webui.lcr.test:0.0.0.0
-- app.lcr.test:0.0.0.0
+- api.lcr.test:0.0.0.0
 - lcr.test:0.0.0.0
 x-volumes:
 - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock

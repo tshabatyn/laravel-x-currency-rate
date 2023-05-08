@@ -3,8 +3,34 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/color-mode',
-    // 'nuxt-icon',
+    '@pinia/nuxt',
+    '@pinia-plugin-persistedstate/nuxt',
   ],
+
+  pinia: {
+    autoImports: [
+      // automatically imports `defineStore`
+      'defineStore', // import { defineStore } from 'pinia'
+      ['defineStore', 'definePiniaStore'], // import { defineStore as definePiniaStore } from 'pinia'
+      'acceptHMRUpdate',
+    ],
+  },
+  piniaPersistedstate: {
+    cookieOptions: {
+      sameSite: 'strict',
+    },
+    storage: 'localStorage'
+  },
+
+  imports: {
+    dirs: ['stores'],
+  },
+
+  runtimeConfig: {
+    public: {
+      API_URL: process.env.API_URL,
+    },
+  },
 
   tailwindcss: {
     injectPosition: 0,
@@ -12,7 +38,7 @@ export default defineNuxtConfig({
   },
 
   colorMode: {
-    classSufix: '',
+    classSuffix: '',
     classPrefix: '',
   },
 

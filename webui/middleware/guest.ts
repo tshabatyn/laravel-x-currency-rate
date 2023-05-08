@@ -1,10 +1,10 @@
 import {defineNuxtRouteMiddleware, useNuxtApp} from "#app";
-import {useUser} from "~/composables/useAuth";
+import {useAuthStore} from "~/stores/auth";
 
 export default defineNuxtRouteMiddleware(async(to) => {
-  const user = await useUser()
+  const authStore = useAuthStore()
 
-  if (user !== null && user !== undefined) {
+  if (authStore.isAuthenticated) {
     return '/'
   }
 })

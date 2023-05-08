@@ -9,7 +9,7 @@
 <script setup lang="ts">
 useHead({
   bodyAttrs: {
-    class: 'bg-gold-light text-gold-dark dark:bg-slate-900 dark:text-slate-200'
+    class: 'bg-gold-light text-gold-dark dark:bg-slate-900 dark:text-moonlight'
   }
 });
 </script>

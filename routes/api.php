@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CurrencyRatesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +16,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::get('/auth/logout', [AuthController::class, 'logout'])
+    ->middleware('auth:sanctum');
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/auth/user', [AuthController::class, 'user']);
+    Route::get('/currency-rates/today', [CurrencyRatesController::class, 'today']);
+    Route::get('/currency-rates/month', [CurrencyRatesController::class, 'month']);
 });
