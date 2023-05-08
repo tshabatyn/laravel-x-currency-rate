@@ -4,8 +4,6 @@ const authStore = useAuthStore()
 
 export const useCurrencyRates = defineStore('CurrencyRates', {
   state: () => ({
-    token: authStore.authToken,
-    isAuthenticated: authStore.isAuthenticated,
     today: null,
     month: null,
     apiBaseURL: useRuntimeConfig()?.public?.API_URL,
@@ -24,7 +22,7 @@ export const useCurrencyRates = defineStore('CurrencyRates', {
             headers: {
               "Content-Type": "application/json",
               "Accept": "application/json",
-              "Authorization": 'Bearer ' + this.token,
+              "Authorization": 'Bearer ' + authStore.authToken,
             },
           }
         )
@@ -42,7 +40,7 @@ export const useCurrencyRates = defineStore('CurrencyRates', {
             headers: {
               "Content-Type": "application/json",
               "Accept": "application/json",
-              "Authorization": 'Bearer ' + this.token,
+              "Authorization": 'Bearer ' + authStore.authToken,
             },
           }
         )
