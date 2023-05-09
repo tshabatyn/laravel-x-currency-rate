@@ -43,7 +43,7 @@ class Crawler implements CrawlerInterface
         $urlToParse .= $currencies;
 
         if ($preventCaching) {
-            $urlToParse .= '?' . date('YmdHi');
+            $urlToParse .= '?' . \date('YmdHi');
         }
 
         return $urlToParse;

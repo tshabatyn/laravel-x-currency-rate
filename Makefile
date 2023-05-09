@@ -177,12 +177,12 @@ watchlog: ## Print out nginx and php-fpm logs
 ################################################################################
 
 cron-enable: ## Enable cron processing
-	@sed -i '' -e 's/.*artisan schedule:run.*/\* \* \* \* \* www\-data \/var\/www\/html\/artisan schedule:run \>\> \/var\/www\/html\/storage\/logs\/cron.log 2\>\&1/' .warden/etc/crontab
+	@sed -i '' -e 's/.*artisan schedule:run.*/\* \* \* \* \* \/bin\/bash \-c \"cd \/var\/www\/html \&\& php artisan schedule:run 2\>\&1 \>\> \/var\/www\/html\/storage\/logs\/cron.log\"/' .warden/etc/crontab
 	@warden env up -d --remove-orphans --force-recreate php-fpm
-	@$(WARDEN_SHELL) bash -c 'sudo chown root. /var/spool/cron/crontabs/www-data'
+	@$(WARDEN_SHELL) bash -c 'sudo chown root. /var/spool/cron/crontabs/www-data ; sudo chmod 0600 /var/spool/cron/crontabs/www-data'
 	@echo "Cron enabled"
 
 cron-disable: ## Disable cron processing
-	@sed -i '' -e 's/.*artisan schedule:run.*/#\* \* \* \* \* www\-data \/var\/www\/html\/artisan schedule:run \>\> \/var\/www\/html\/storage\/logs\/cron.log 2\>\&1/' .warden/etc/crontab
+	@sed -i '' -e 's/.*artisan schedule:run.*/#\* \* \* \* \* \/bin\/bash \-c \"cd \/var\/www\/html \&\& php artisan schedule:run 2\>\&1 \>\> \/var\/www\/html\/storage\/logs\/cron.log\"/' .warden/etc/crontab
 	@warden env up -d --remove-orphans --force-recreate php-fpm
 	@echo "Cron disabled"

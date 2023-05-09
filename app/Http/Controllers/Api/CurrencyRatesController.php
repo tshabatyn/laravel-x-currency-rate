@@ -3,17 +3,38 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 
 class CurrencyRatesController extends Controller
 {
+    // expire key after 600 sec (10 min * 60 seconds)
+    const CACHE_TTL_FOR_DAY = 600;
+    // expire key after 43200 sec (12 hours * 60 min * 60 seconds)
+    const CACHE_TTL_FOR_MONTH = 43200;
+
     /**
      * Reply with the today's currency rate.
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Foundation\Application|\Illuminate\Http\Response
      */
-    public function today()
+    public function today(Request $request)
     {
-        return response(["currencies" => "EUR-USD", "rate" => 1.1211], 200);
+        $currencies = $request->get('currencies');
+        [$from, $to] = explode('-', $currencies);
+
+        $key = $this->generateCacheKey('today', $from, $to);
+        $todayRate = Cache::get($key);
+
+        if ($todayRate) {
+            $todayRate = \json_decode($todayRate, JSON_OBJECT_AS_ARRAY);
+        } else {
+            $todayRate = $this->loadFromDbTodayRates($from, $to, $currencies);
+            Cache::add($key, \json_encode($todayRate), self::CACHE_TTL_FOR_DAY);
+        }
+
+        return response($todayRate, 200);
     }
 
     /**
@@ -21,45 +42,93 @@ class CurrencyRatesController extends Controller
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Foundation\Application|\Illuminate\Http\Response
      */
-    public function month()
+    public function month(Request $request)
     {
-        return response(
-            [
-                "currencies" => "EUR-USD",
-                "rates" => [
-                    ["date" => "2023-04-05", "rate" => 1.09045],
-                    ["date" => "2023-04-06", "rate" => 1.091955],
-                    ["date" => "2023-04-07", "rate" => 1.09955],
-                    ["date" => "2023-04-08", "rate" => 1.09945],
-                    ["date" => "2023-04-09", "rate" => 1.09135],
-                    ["date" => "2023-04-10", "rate" => 1.086895],
-                    ["date" => "2023-04-11", "rate" => 1.0917],
-                    ["date" => "2023-04-12", "rate" => 1.099785],
-                    ["date" => "2023-04-13", "rate" => 1.105115],
-                    ["date" => "2023-04-14", "rate" => 1.11035],
-                    ["date" => "2023-04-15", "rate" => 1.11025],
-                    ["date" => "2023-04-16", "rate" => 1.09835],
-                    ["date" => "2023-04-17", "rate" => 1.0926],
-                    ["date" => "2023-04-18", "rate" => 1.097565],
-                    ["date" => "2023-04-19", "rate" => 1.09525],
-                    ["date" => "2023-04-20", "rate" => 1.096815],
-                    ["date" => "2023-04-21", "rate" => 1.10965],
-                    ["date" => "2023-04-22", "rate" => 1.10965],
-                    ["date" => "2023-04-23", "rate" => 1.09935],
-                    ["date" => "2023-04-24", "rate" => 1.10575],
-                    ["date" => "2023-04-25", "rate" => 1.097875],
-                    ["date" => "2023-04-26", "rate" => 1.10445],
-                    ["date" => "2023-04-27", "rate" => 1.103175],
-                    ["date" => "2023-04-28", "rate" => 1.11285],
-                    ["date" => "2023-04-29", "rate" => 1.11275],
-                    ["date" => "2023-04-30", "rate" => 1.101055],
-                    ["date" => "2023-05-01", "rate" => 1.09676],
-                    ["date" => "2023-05-02", "rate" => 1.101055],
-                    ["date" => "2023-05-03", "rate" => 1.106855],
-                    ["date" => "2023-05-04", "rate" => 1.10225],
-                    ["date" => "2023-05-05", "rate" => 1.12115],
-                    ["date" => "2023-05-06", "rate" => 1.121],
-                ],
-            ], 200);
+        $currencies = $request->get('currencies');
+        [$from, $to] = explode('-', $currencies);
+
+        $key = $this->generateCacheKey('month', $from, $to);
+        $numOfDaysInPastMonth = \cal_days_in_month(CAL_GREGORIAN, \date('n') - 1, \date('Y'));
+
+        $monthRate = Cache::get($key);
+
+        if ($monthRate) {
+            $monthRate = \json_decode($monthRate, JSON_OBJECT_AS_ARRAY);
+        } else {
+            $monthRate = $this->loadFromDbPastMonthRates($from, $to, $numOfDaysInPastMonth);
+            Cache::add($key, \json_encode($monthRate), self::CACHE_TTL_FOR_MONTH);
+        }
+
+        return response($monthRate, 200);
+    }
+
+    /**
+     * @param string $method
+     * @param string $from
+     * @param string $to
+     *
+     * @return string
+     */
+    private function generateCacheKey(string $method, string $from, string $to): string
+    {
+        $key = 'cr:' . $method . ':' . $from . '-' . $to . ':' . \date('Y-m-d');
+
+        return $key;
+    }
+
+    /**
+     * @param string $from
+     * @param string $to
+     * @param mixed $currencies
+     *
+     * @return array
+     */
+    private function loadFromDbTodayRates(string $from, string $to, mixed $currencies): array
+    {
+        $table = DB::table('currency_rates');
+        $currencyRate = $table
+            ->where(
+                [
+                    ['from', '=', $from],
+                    ['to', '=', $to],
+                ]
+            )
+            ->orderBy('date', 'desc')
+            ->first()
+        ;
+
+        return ["currencies" => $currencies, "rate" => $currencyRate->rate];
+    }
+
+    /**
+     * @param string $from
+     * @param string $to
+     * @param int $numOfDaysInPastMonth
+     *
+     * @return string[]
+     */
+    private function loadFromDbPastMonthRates(string $from, string $to, int $numOfDaysInPastMonth): array
+    {
+        $response = [
+            "currencies" => "$from-$to",
+        ];
+
+        $table = DB::table('currency_rates');
+        $currencyRates = $table
+            ->where(
+                [
+                    ['from', '=', $from],
+                    ['to', '=', $to],
+                ]
+            )
+            ->orderBy('date', 'desc')
+            ->offset(1)
+            ->limit($numOfDaysInPastMonth + 1)
+            ->get(['date', 'rate'])
+        ;
+
+        $response['rates'] = $currencyRates;
+
+        return $response;
     }
 }

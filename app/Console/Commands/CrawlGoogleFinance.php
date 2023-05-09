@@ -38,7 +38,7 @@ class CrawlGoogleFinance extends Command
         $fromCurrency = $this->argument('from-currency');
         $toCurrency = $this->argument('to-currency');
 
-        $this->getProcessor()->process($fromCurrency, $toCurrency);
+        $this->components->info($this->getProcessor()->process($fromCurrency, $toCurrency));
     }
 
     /**

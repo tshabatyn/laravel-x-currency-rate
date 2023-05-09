@@ -11,9 +11,9 @@ interface ProcessorInterface
      * @param string $fromCurrency
      * @param string $toCurrency
      *
-     * @return mixed
+     * @return string
      */
-    public function process(string $fromCurrency, string $toCurrency): void;
+    public function process(string $fromCurrency, string $toCurrency): string;
 
     /**
      * Retrieve current currency rate between given currencies.

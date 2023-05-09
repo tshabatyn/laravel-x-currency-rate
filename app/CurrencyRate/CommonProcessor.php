@@ -31,14 +31,14 @@ class CommonProcessor implements ProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function process(string $fromCurrency, string $toCurrency): void
+    public function process(string $fromCurrency, string $toCurrency): string
     {
         try {
             $currencyRate = $this->getCurrencyRate($fromCurrency, $toCurrency);
         } catch (Throwable) {
             $currencyRate = '--.--';
         }
-        echo "Currency rate $fromCurrency - $toCurrency:\n\t$currencyRate\n";
+        return "Currency rate $fromCurrency - $toCurrency:\n\t$currencyRate\n";
     }
 
     /**

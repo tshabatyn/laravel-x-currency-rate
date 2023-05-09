@@ -45,7 +45,7 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $data['is_admin'] = true;
-        $data['email_verified_at'] = date('Y-m-d H:i:s');
+        $data['email_verified_at'] = \date('Y-m-d H:i:s');
         $data['password'] = Hash::make($data['password']);
 
         $data['created_by'] = $request->user()->id;
